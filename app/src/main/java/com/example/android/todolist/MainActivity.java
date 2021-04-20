@@ -76,9 +76,18 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.ItemC
 
             // Called when a user swipes left or right on a ViewHolder
             @Override
-            public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
+            public void onSwiped(final RecyclerView.ViewHolder viewHolder, int swipeDir) {
                 // Here is where you'll implement swipe to delete
                 // TODO (1) Get the diskIO Executor from the instance of AppExecutors and
+                AppExecutors.getInstance().diskIO().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        int position = viewHolder.getAdapterPosition();
+                        List<TaskEntry> tasks = mAdapter.getTasks();
+                        mDb.taskDao().deleteTask(tasks.get(position));
+                        retrieveTasks();
+                    }
+                });
                 // call the diskIO execute method with a new Runnable and implement its run method
 
                 // TODO (3) get the position from the viewHolder parameter
@@ -115,6 +124,10 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.ItemC
     protected void onResume() {
         super.onResume();
         // TODO (5) Extract the logic to a retrieveTasks method so it can be reused
+        retrieveTasks();
+    }
+
+    private void retrieveTasks() {
         AppExecutors.getInstance().diskIO().execute(new Runnable() {
             @Override
             public void run() {
