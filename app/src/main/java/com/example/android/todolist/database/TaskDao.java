@@ -1,5 +1,6 @@
 package com.example.android.todolist.database;
 
+import android.arch.lifecycle.LiveData;
 import android.arch.persistence.room.Dao;
 import android.arch.persistence.room.Delete;
 import android.arch.persistence.room.Insert;
@@ -12,8 +13,9 @@ import java.util.List;
 @Dao
 public interface TaskDao {
 
+    // TODO (2) Wrap the return type with LiveData
     @Query("SELECT * FROM task ORDER BY priority")
-    List<TaskEntry> loadAllTasks();
+    LiveData<List<TaskEntry>> loadAllTasks();
 
     @Insert
     void insertTask(TaskEntry taskEntry);
@@ -24,9 +26,6 @@ public interface TaskDao {
     @Delete
     void deleteTask(TaskEntry taskEntry);
 
-    // TODO (1) Create a Query method named loadTaskById that receives an int id and returns a TaskEntry Object
-    // The query for this method should get all the data for that id in the task table
-    @Query("select * from task where id= :id")
-    TaskEntry loadTaskByUd(int id);
-
+    @Query("SELECT * FROM task WHERE id = :id")
+    LiveData<TaskEntry> loadTaskById(int id);
 }

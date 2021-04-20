@@ -16,8 +16,12 @@
 
 package com.example.android.todolist;
 
+import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
@@ -71,29 +75,21 @@ public class AddTaskActivity extends AppCompatActivity {
             mButton.setText(R.string.update_button);
             if (mTaskId == DEFAULT_TASK_ID) {
                 // populate the UI
-                // TODO (3) Assign the value of EXTRA_TASK_ID in the intent to mTaskId
-                mTaskId=intent.getIntExtra(AddTaskActivity.EXTRA_TASK_ID,DEFAULT_TASK_ID);
-                // Use DEFAULT_TASK_ID as the default
-
-                // TODO (4) Get the diskIO Executor from the instance of AppExecutors and
-                // call the diskIO execute method with a new Runnable and implement its run method
-                AppExecutors.getInstance().diskIO().execute(new Runnable() {
+                mTaskId = intent.getIntExtra(EXTRA_TASK_ID, DEFAULT_TASK_ID);
+                AddTaskViewModelFactory viewModelFactory =new AddTaskViewModelFactory(mDb,mTaskId);
+                final AddTaskViewModel viewModel
+                        = ViewModelProviders.of(this,viewModelFactory).get(AddTaskViewModel.class);
+                viewModel.getTask().observe(this, new Observer<TaskEntry>() {
                     @Override
-                    public void run() {
-                        final TaskEntry taskEntry = mDb.taskDao().loadTaskByUd(mTaskId);
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                populateUI(taskEntry);
-                            }
-                        });
+                    public void onChanged(@Nullable TaskEntry taskEntry) {
+                        viewModel.getTask().removeObserver(this);
+                        populateUI(taskEntry);
+
                     }
                 });
-                // TODO (5) Use the loadTaskById method to retrieve the task with id mTaskId and
-                // assign its value to a final TaskEntry variable
+                // We will be able to simplify this once we learn more
+                // about Android Architecture Components
 
-                // TODO (6) Call the populateUI method with the retrieve tasks
-                // Remember to wrap it in a call to runOnUiThread
             }
         }
     }
@@ -126,11 +122,10 @@ public class AddTaskActivity extends AppCompatActivity {
      * @param task the taskEntry to populate the UI
      */
     private void populateUI(TaskEntry task) {
-        // TODO (7) return if the task is null
-        if(task==null)
+        if (task == null) {
             return;
+        }
 
-        // TODO (8) use the variable task to populate the UI
         mEditText.setText(task.getDescription());
         setPriorityInViews(task.getPriority());
     }
@@ -144,18 +139,17 @@ public class AddTaskActivity extends AppCompatActivity {
         int priority = getPriorityFromViews();
         Date date = new Date();
 
-        final TaskEntry taskEntry = new TaskEntry(description, priority, date);
+        final TaskEntry task = new TaskEntry(description, priority, date);
         AppExecutors.getInstance().diskIO().execute(new Runnable() {
             @Override
             public void run() {
-                // TODO (9) insert the task only if mTaskId matches DEFAULT_TASK_ID
-                // Otherwise update it
-                // call finish in any case
-                if(mTaskId==DEFAULT_TASK_ID) {
-                    mDb.taskDao().insertTask(taskEntry);
-                }else {
-                    taskEntry.setId(mTaskId);
-                    mDb.taskDao().updateTask(taskEntry);
+                if (mTaskId == DEFAULT_TASK_ID) {
+                    // insert new task
+                    mDb.taskDao().insertTask(task);
+                } else {
+                    //update task
+                    task.setId(mTaskId);
+                    mDb.taskDao().updateTask(task);
                 }
                 finish();
             }
