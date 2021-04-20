@@ -16,22 +16,33 @@
 
 package com.udacity.example.quizexample;
 
+import android.content.ContentResolver;
+import android.database.Cursor;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.content.ContentResolverCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
+
+import com.udacity.example.droidtermsprovider.DroidTermsExampleContract;
 
 /**
  * Gets the data from the ContentProvider and shows a series of flash cards.
  */
 
 public class MainActivity extends AppCompatActivity {
+    private static final String TAG = "MainActivity";
 
     // The current state of the app
     private int mCurrentState;
 
 
     private Button mButton;
+    private TextView mDefinitionTextView;
+    private TextView mWordTextView;
 
     // This state is when the word definition is hidden and clicking the button will therefore
     // show the definition
@@ -42,6 +53,9 @@ public class MainActivity extends AppCompatActivity {
     private final int STATE_SHOWN = 1;
 
 
+    private int colWord,colDef;
+    private Cursor mData;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,6 +63,10 @@ public class MainActivity extends AppCompatActivity {
 
         // Get the views
         mButton = (Button) findViewById(R.id.button_next);
+        mDefinitionTextView = (TextView) findViewById(R.id.text_view_definition);
+        mWordTextView = (TextView) findViewById(R.id.text_view_word);
+
+        new MyTask().execute();
     }
 
     /**
@@ -70,21 +88,73 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void nextWord() {
 
-        // Change button text
-        mButton.setText(getString(R.string.show_definition));
 
-        mCurrentState = STATE_HIDDEN;
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mData.close();
 
     }
 
+    class MyTask extends AsyncTask<Void,Void, Cursor> {
+
+        @Override
+        protected Cursor doInBackground(Void... voids) {
+            ContentResolver resolver=getContentResolver();
+            return resolver.query(DroidTermsExampleContract.CONTENT_URI,
+                    null, null, null, null);
+
+        }
+
+        @Override
+        protected void onPostExecute(Cursor cursor) {
+            super.onPostExecute(cursor);
+            mData=cursor;
+            colWord = mData.getColumnIndex(DroidTermsExampleContract.COLUMN_WORD);
+            colDef = mData.getColumnIndex(DroidTermsExampleContract.COLUMN_DEFINITION);
+            while (mData.moveToNext()) {
+               String word = mData.getString(colWord);
+               String def = mData.getString(colDef);
+               Log.i(TAG, "Term : " + word + " " + def);
+           }
+            nextWord();
+
+        }
+
+    }
+
+    public void nextWord() {
+        if (mData != null) {
+            // Move to the next position in the cursor, if there isn't one, move to the first
+            if (!mData.moveToNext()) {
+                mData.moveToFirst();
+            }
+            // Hide the definition TextView
+            mDefinitionTextView.setVisibility(View.INVISIBLE);
+
+            // Change button text
+            mButton.setText(getString(R.string.show_definition));
+            // Get the next word
+            mWordTextView.setText(mData.getString(colWord));
+            mDefinitionTextView.setText(mData.getString(colDef));
+
+            mCurrentState = STATE_HIDDEN;
+        }
+    }
     public void showDefinition() {
 
-        // Change button text
-        mButton.setText(getString(R.string.next_word));
+        // COMPLETED (4) Show the definition
+        if (mData != null) {
+            // Show the definition TextView
+            mDefinitionTextView.setVisibility(View.VISIBLE);
 
-        mCurrentState = STATE_SHOWN;
+            // Change button text
+            mButton.setText(getString(R.string.next_word));
+
+            mCurrentState = STATE_SHOWN;
+        }
 
     }
 
