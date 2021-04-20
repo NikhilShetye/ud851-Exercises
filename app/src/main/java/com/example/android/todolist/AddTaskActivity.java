@@ -115,19 +115,15 @@ public class AddTaskActivity extends AppCompatActivity {
         int priority = getPriorityFromViews();
         Date date = new Date();
 
-        //  (4) Make taskEntry final so it is visible inside the run method
         final TaskEntry taskEntry = new TaskEntry(description, priority, date);
-        //  (2) Get the diskIO Executor from the instance of AppExecutors and
         AppExecutors.getInstance().diskIO().execute(new Runnable() {
             @Override
             public void run() {
+                // COMPLETED (3) Move the remaining logic inside the run method
                 mDb.taskDao().insertTask(taskEntry);
-
+                finish();
             }
         });
-        // call the diskIO execute method with a new Runnable and implement its run method
-        //  (3) Move the remaining logic inside the run method
-        finish();
     }
 
     /**

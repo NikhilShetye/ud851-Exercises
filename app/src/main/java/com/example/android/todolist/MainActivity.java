@@ -76,8 +76,23 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.ItemC
 
             // Called when a user swipes left or right on a ViewHolder
             @Override
-            public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
+            public void onSwiped(final RecyclerView.ViewHolder viewHolder, int swipeDir) {
                 // Here is where you'll implement swipe to delete
+                // TODO (1) Get the diskIO Executor from the instance of AppExecutors and
+                AppExecutors.getInstance().diskIO().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        int position = viewHolder.getAdapterPosition();
+                        List<TaskEntry> tasks = mAdapter.getTasks();
+                        mDb.taskDao().deleteTask(tasks.get(position));
+                        retrieveTasks();
+                    }
+                });
+                // call the diskIO execute method with a new Runnable and implement its run method
+
+                // TODO (3) get the position from the viewHolder parameter
+                // TODO (4) Call deleteTask in the taskDao with the task at that position
+                // TODO (6) Call retrieveTasks method to refresh the UI
             }
         }).attachToRecyclerView(mRecyclerView);
 
@@ -108,25 +123,25 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.ItemC
     @Override
     protected void onResume() {
         super.onResume();
-        //  (5) Get the diskIO Executor from the instance of AppExecutors and
+        // TODO (5) Extract the logic to a retrieveTasks method so it can be reused
+        retrieveTasks();
+    }
+
+    private void retrieveTasks() {
         AppExecutors.getInstance().diskIO().execute(new Runnable() {
             @Override
             public void run() {
-                final List<TaskEntry> taskEntries = mDb.taskDao().loadAllTasks();
+                final List<TaskEntry> tasks = mDb.taskDao().loadAllTasks();
+                // We will be able to simplify this once we learn more
+                // about Android Architecture Components
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        mAdapter.setTasks(taskEntries);
+                        mAdapter.setTasks(tasks);
                     }
                 });
-
             }
         });
-        // call the diskIO execute method with a new Runnable and implement its run method
-
-        //  (6) Move the logic into the run method and
-        // extract the list of tasks to a final variable
-        //  (7) Wrap the setTask call in a call to runOnUiThread
     }
 
     @Override
