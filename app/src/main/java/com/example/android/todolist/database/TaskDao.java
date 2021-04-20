@@ -26,4 +26,7 @@ public interface TaskDao {
 
     // TODO (1) Create a Query method named loadTaskById that receives an int id and returns a TaskEntry Object
     // The query for this method should get all the data for that id in the task table
+    @Query("select * from task where id= :id")
+    TaskEntry loadTaskByUd(int id);
+
 }
