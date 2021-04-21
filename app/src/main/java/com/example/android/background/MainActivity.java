@@ -27,6 +27,7 @@ import android.widget.Toast;
 
 import com.example.android.background.sync.ReminderTasks;
 import com.example.android.background.sync.WaterReminderIntentService;
+import com.example.android.background.utilities.NotificationUtils;
 import com.example.android.background.utilities.PreferenceUtilities;
 
 public class MainActivity extends AppCompatActivity implements
@@ -83,12 +84,15 @@ public class MainActivity extends AppCompatActivity implements
         if (mToast != null) mToast.cancel();
         mToast = Toast.makeText(this, R.string.water_chug_toast, Toast.LENGTH_SHORT);
         mToast.show();
-        // TODO (15) Create an explicit intent for WaterReminderIntentService
-        Intent intent=new Intent(this, WaterReminderIntentService.class);
-        // TODO (16) Set the action of the intent to ACTION_INCREMENT_WATER_COUNT
-        intent.setAction(ReminderTasks.ACTION_INCREMENT_WATER_COUNT);
-        // TODO (17) Call startService and pass the explicit intent you just created
-        startService(intent);
+
+        Intent incrementWaterCountIntent = new Intent(this, WaterReminderIntentService.class);
+        incrementWaterCountIntent.setAction(ReminderTasks.ACTION_INCREMENT_WATER_COUNT);
+        startService(incrementWaterCountIntent);
+    }
+
+    // TODO (15) Create a method called testNotification that triggers NotificationUtils' remindUserBecauseCharging
+    public void testNotification(View  view){
+        NotificationUtils.remindUserBecauseCharging(this);
     }
 
     @Override
