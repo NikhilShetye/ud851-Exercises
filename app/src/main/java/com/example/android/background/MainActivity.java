@@ -15,19 +15,23 @@
  */
 package com.example.android.background;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.example.android.background.sync.ReminderTasks;
+import com.example.android.background.sync.ReminderUtilities;
 import com.example.android.background.sync.WaterReminderIntentService;
-import com.example.android.background.utilities.NotificationUtils;
 import com.example.android.background.utilities.PreferenceUtilities;
 
 public class MainActivity extends AppCompatActivity implements
@@ -38,6 +42,8 @@ public class MainActivity extends AppCompatActivity implements
     private ImageView mChargingImageView;
 
     private Toast mToast;
+    private IntentFilter mChagrgingIntentFilter;
+    private  ChargingBroadcastReceiver mcCargingBroadcastReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,10 +60,18 @@ public class MainActivity extends AppCompatActivity implements
         updateChargingReminderCount();
 
         // TODO (23) Schedule the charging reminder
+        ReminderUtilities.scheduleChargingReminder(getApplicationContext());
+//        ReminderUtilities.scheduleChargingReminderWorkManager(getApplicationContext());
 
         /** Setup the shared preference listener **/
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         prefs.registerOnSharedPreferenceChangeListener(this);
+
+        mChagrgingIntentFilter=new IntentFilter();
+        mChagrgingIntentFilter.addAction(Intent.ACTION_POWER_CONNECTED);
+        mChagrgingIntentFilter.addAction(Intent.ACTION_POWER_DISCONNECTED);
+
+        mcCargingBroadcastReceiver =new ChargingBroadcastReceiver();
     }
 
     /**
@@ -94,10 +108,7 @@ public class MainActivity extends AppCompatActivity implements
 
 
     // TODO (24) Remove the button and testNotification code
-    
-    public void testNotification(View view) {
-        NotificationUtils.remindUserBecauseCharging(this);
-    }
+
 
     @Override
     protected void onDestroy() {
@@ -118,5 +129,35 @@ public class MainActivity extends AppCompatActivity implements
         } else if (PreferenceUtilities.KEY_CHARGING_REMINDER_COUNT.equals(key)) {
             updateChargingReminderCount();
         }
+    }
+
+    public void showCharging(boolean isCharging){
+        if(isCharging)
+            mChargingImageView.setImageResource(R.drawable.ic_power_pink_80px);
+        else
+            mChargingImageView.setImageResource(R.drawable.ic_power_grey_80px);
+
+    }
+
+    private class ChargingBroadcastReceiver extends BroadcastReceiver{
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            boolean isCharging = (action.equals(Intent.ACTION_POWER_CONNECTED));
+            showCharging(isCharging);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(mcCargingBroadcastReceiver,mChagrgingIntentFilter);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(mcCargingBroadcastReceiver);
     }
 }

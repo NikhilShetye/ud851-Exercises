@@ -25,9 +25,9 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Build;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationCompat.Action;
-import android.support.v4.content.ContextCompat;
+
+import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 
 import com.example.android.background.MainActivity;
 import com.example.android.background.R;
@@ -93,7 +93,7 @@ public class NotificationUtils {
         }
         notificationManager.notify(WATER_REMINDER_NOTIFICATION_ID, notificationBuilder.build());
     }
-    private static Action ignoreReminderAction(Context context) {
+    private static NotificationCompat.Action ignoreReminderAction(Context context) {
         Intent ignoreReminderIntent = new Intent(context, WaterReminderIntentService.class);
         ignoreReminderIntent.setAction(ReminderTasks.ACTION_DISMISS_NOTIFICATION);
         PendingIntent ignoreReminderPendingIntent = PendingIntent.getService(
@@ -101,13 +101,13 @@ public class NotificationUtils {
                 ACTION_IGNORE_PENDING_INTENT_ID,
                 ignoreReminderIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT);
-        Action ignoreReminderAction = new Action(R.drawable.ic_cancel_black_24px,
+        NotificationCompat.Action ignoreReminderAction = new NotificationCompat.Action(R.drawable.ic_cancel_black_24px,
                 "No, thanks.",
                 ignoreReminderPendingIntent);
         return ignoreReminderAction;
     }
 
-    private static Action drinkWaterAction(Context context) {
+    private static NotificationCompat.Action drinkWaterAction(Context context) {
         Intent incrementWaterCountIntent = new Intent(context, WaterReminderIntentService.class);
         incrementWaterCountIntent.setAction(ReminderTasks.ACTION_INCREMENT_WATER_COUNT);
         PendingIntent incrementWaterPendingIntent = PendingIntent.getService(
@@ -115,7 +115,7 @@ public class NotificationUtils {
                 ACTION_DRINK_PENDING_INTENT_ID,
                 incrementWaterCountIntent,
                 PendingIntent.FLAG_CANCEL_CURRENT);
-        Action drinkWaterAction = new Action(R.drawable.ic_local_drink_black_24px,
+        NotificationCompat.Action drinkWaterAction = new NotificationCompat.Action(R.drawable.ic_local_drink_black_24px,
                 "I did it!",
                 incrementWaterPendingIntent);
         return drinkWaterAction;
